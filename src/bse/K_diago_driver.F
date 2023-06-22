@@ -196,11 +196,13 @@ subroutine K_diago_driver(iq,W,X_static)
      !
 #if defined _SLEPC && !defined _NL
      if(l_slepc) then
+     call timing(trim(Solver)//' Solver matrix creation',OPR='start')
        ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
        ! using the K_multiply_by_V function used in the Haydock method
        if (.not.BSS_slepc_matrix) call K_shell_matrix(i_BS_mat,slepc_mat)
        ! 2. Here we create a distributed PETSC matrix from the BS_blks
        if (     BSS_slepc_matrix) call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
+     call timing(trim(Solver)//' Solver matrix creation',OPR='stop')
      endif
 #endif
      !
@@ -229,7 +231,9 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
 #if defined _SLEPC && !defined _NL
+       call timing(trim(Solver)//' Solver solve',OPR='start')
        if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_mat,E_real=BS_E_real)
+       call timing(trim(Solver)//' Solver solve',OPR='stop')
 #endif
        !
        BS_E=cmplx(BS_E_real,0._SP,SP)
