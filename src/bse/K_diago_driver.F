@@ -222,7 +222,11 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
 #if defined _SLEPC && !defined _NL
-       if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+       if(l_slepc) then
+          call timing(trim(Solver)//' Solver solve non-herm',OPR='start')
+          call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+          call timing(trim(Solver)//' Solver solve non-herm',OPR='stop')
+       endif
 #endif
        !
        if (BSS_write_eig_2_db) BS_mat=BS_V_right
@@ -231,9 +235,11 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
 #if defined _SLEPC && !defined _NL
-       call timing(trim(Solver)//' Solver solve',OPR='start')
-       if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_mat,E_real=BS_E_real)
-       call timing(trim(Solver)//' Solver solve',OPR='stop')
+       if(l_slepc) then
+          call timing(trim(Solver)//' Solver solve herm',OPR='start')
+          call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_mat,E_real=BS_E_real)
+          call timing(trim(Solver)//' Solver solve herm',OPR='stop')
+       endif
 #endif
        !
        BS_E=cmplx(BS_E_real,0._SP,SP)
