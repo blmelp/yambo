@@ -62,8 +62,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  Mat                         :: M_slepc
  logical                     :: l_target_energy
  integer                     :: n_eig         ! number of eigenvalues to compute
- complex(SP)                 :: V_right(:,:)  ! right eigenvalues
- complex(SP),  optional      :: V_left(:,:)   ! left eigenvalues
+ complex(SP)                 :: V_right(:,:)  ! right eigenvector
+ complex(SP),  optional      :: V_left(:,:)   ! left eigenvector
  complex(SP),  optional      :: E_cmpl(:)     ! complex eigenvalues
  real(SP),     optional      :: E_real(:)     ! real eigenvalues
  ! 
@@ -106,6 +106,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! Non hermitian not implemented yet!
  !
  call MatGetSize(M_slepc,n,j,ierr)
+ call msg( 'sr', '[SLEPC] Size of matrix n                 ', int(n) )
+ call msg( 'sr', '[SLEPC] Size of matrix j                 ', int(j) )
  call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
  !
@@ -124,7 +126,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  if(     present(V_left)) then
    ! To do: to check if it can be cast in the form of a generalized hermitian problem
    call EPSSetProblemType(eps,EPS_NHEP,ierr)
-   call EPSSetFromOptions(eps,ierr)
    call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
  else
    call EPSSetProblemType(eps,EPS_HEP,ierr)
@@ -234,6 +235,11 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  !free the M_slepc matrix
  call MatDestroy(M_slepc,ierr)
+
+ !Commandline options
+ call EPSSetFromOptions(eps,ierr)
+ !call EPSSetUp(eps,ierr)
+
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Optional: Get some information from the solver and display it
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
