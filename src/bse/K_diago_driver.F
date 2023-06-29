@@ -444,6 +444,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      use com,           ONLY:msg
      !
+     call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
      call parser('BSSEnTarget',l_target_energy)
      !
      if (     BSS_slepc_matrix)  call msg( 's', '[SLEPC] Faster alogorithm but BSE matrix diuplicated over MPI tasks')
@@ -483,6 +484,7 @@ subroutine K_diago_driver(iq,W,X_static)
        deallocate(Slepc_v%Vo)
        call PARALLEL_Haydock_VEC_COMMs('reset')
      endif
+     call SlepcFinalize(ierr)
      !
    end subroutine K_slepc_local_free
 #endif
