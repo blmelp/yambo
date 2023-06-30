@@ -80,6 +80,13 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
    call msg( 'sr', '[SLEPC_BLCK] Block mode ', BS_blk(i_B)%mode)
    call msg( 'sr', '[SLEPC_BLCK] Block size 1 ', BS_blk(i_B)%size(1))
    call msg( 'sr', '[SLEPC_BLCK] Block size 2 ', BS_blk(i_B)%size(1))
+   call msg( 'sr', '[SLEPC_BLCK] Coordinate 1 in matrix (left botton element) ', int(BS_blk(i_B)%coordinate(1)))
+   call msg( 'sr', '[SLEPC_BLCK] Coordinate 2 in matrix (left botton element) ', int(BS_blk(i_B)%coordinate(2)))
+
+   call msg( 'sr', '[SLEPC_BLCK] Index @ k ', int(BS_blk(i_B)%iT_k))
+   call msg( 'sr', '[SLEPC_BLCK] Index @ p ', int(BS_blk(i_B)%iT_p))
+   call msg( 'sr', '[SLEPC_BLCK] Index to start counting for H_pos @ k ', int(BS_blk(i_B)%iT_k_st))
+   call msg( 'sr', '[SLEPC_BLCK] Index to start counting for H_pos @ p ', int(BS_blk(i_B)%iT_p_st))
    
    !
    i_Tk  =BS_blk(i_B)%iT_k
