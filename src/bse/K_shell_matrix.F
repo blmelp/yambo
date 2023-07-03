@@ -34,6 +34,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
+ use com,            ONLY : msg
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -58,6 +59,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  external K_multiply_by_V_slepc
  external K_multiply_by_V_transpose_slepc
  !
+ call msg( 'sr', '[SLEPC] Type of matrix:         ', 'shell')
  if (BS_res_ares_n_mat==2) call error(" Slepc with shells and multiple BS_mat not coded")
  !
  SL_H_dim=BS_H_dim
