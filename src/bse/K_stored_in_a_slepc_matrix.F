@@ -72,6 +72,8 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  ! 
  ! filling of the slepc_mat
  !
+ call PetscSynchronizedPrintf(PETSC_COMM_WORLD,'n_BS_blks=%d\n',n_BS_blks,ierr)
+ call PetscSynchronizedFlush(PETSC_COMM_WORLD,ierr)
  !
  call msg( 'sr', '[SLEPC] Type of matrix:         ', 'explicit')
  call msg( 'sr', '[SLEPC_BLCKS] Number of blocks        ',int(n_BS_blks) )
