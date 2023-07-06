@@ -57,6 +57,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  PetscScalar         :: Mij,Mij_star
  PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
  PetscErrorCode      :: ierr
+ character (len = 70) :: str_num_block
  !
  if(     BS_K_coupling) SL_H_dim=BS_H_dim
  if(.not.BS_K_coupling) SL_H_dim=BS_K_dim(i_BS_mat)
@@ -72,8 +73,10 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  ! 
  ! filling of the slepc_mat
  !
- call PetscSynchronizedPrintf(PETSC_COMM_WORLD,'n_BS_blks=%d\n',n_BS_blks,ierr)
- call PetscSynchronizedFlush(PETSC_COMM_WORLD,ierr)
+ write (str_num_block, "(A11,I3)") "num blocks:", n_BS_blks
+ print *,str_num_block
+ !call PetscSynchronizedPrintf(PETSC_COMM_WORLD,str_num_block,ierr)
+ !call PetscSynchronizedFlush(PETSC_COMM_WORLD,ierr)
  !
  call msg( 'sr', '[SLEPC] Type of matrix:         ', 'explicit')
  call msg( 'sr', '[SLEPC_BLCKS] Number of blocks        ',int(n_BS_blks) )
