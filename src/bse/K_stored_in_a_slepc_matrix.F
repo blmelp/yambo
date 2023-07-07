@@ -21,6 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+  module shellmat_module
+#include <petsc/finclude/petscmat.h>
+    use petscmat
+    Mat::A,B
+  end module shellmat_module
+
 subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
  ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
@@ -47,17 +53,24 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  use slepceps
  use slepcepsdef
  use petscmatdef
+ use shellmat_module
  !
  implicit none
  !
  integer, intent(in)  :: i_BS_mat
  Mat,     intent(out) :: slepc_mat
+ Mat                  :: AT,BHT
+ Mat                  :: matArray(4)
  !
  integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
  PetscScalar         :: Mij,Mij_star
+ PetscScalar         :: mone
  PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
+ PetscInt            :: itwo 
  PetscErrorCode      :: ierr
  character (len = 70) :: str_num_block
+ !
+ external AT_mat_mult, BHT_mat_mult, AT_mat_mult_transpose, BHT_mat_mult_transpose
  !
  if(     BS_K_coupling) SL_H_dim=BS_H_dim
  if(.not.BS_K_coupling) SL_H_dim=BS_K_dim(i_BS_mat)
@@ -70,6 +83,18 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  call MatSetType(slepc_mat, MATMPIDENSE,ierr)
  call MatSetFromOptions(slepc_mat,ierr)
  call MatSetUp(slepc_mat,ierr)
+
+ call MatCreate(PETSC_COMM_WORLD,A,ierr)
+ call MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
+ call MatSetType(A, MATMPIDENSE,ierr)
+ call MatSetFromOptions(A,ierr)
+ call MatSetUp(A,ierr)
+
+ call MatCreate(PETSC_COMM_WORLD,B,ierr)
+ call MatSetSizes(B,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
+ call MatSetType(B, MATMPIDENSE,ierr)
+ call MatSetFromOptions(B,ierr)
+ call MatSetUp(B,ierr)
  ! 
  ! filling of the slepc_mat
  !
@@ -132,10 +157,12 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
        endif
        !
        select case(BS_blk(i_B)%mode)
-       case("R")
+       case("R")    
            call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           call MatSetValue( A, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! The resonant block is hermitial
            call MatSetValue( slepc_mat, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
+           call MatSetValue( A, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
          if (l_BS_ares_from_res.and.BS_K_coupling) then
            ! The anti-resonant block is A=-R*
            call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1), -Mij_star, INSERT_VALUES, ierr )
@@ -144,11 +171,13 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
          endif
        case("C")
            call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+           call MatSetValue( B, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
            call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1), -Mij_star , INSERT_VALUES, ierr )
            if (l_BS_ares_from_res) then
              ! The coupling block and the anti-coupling block are symmetric
              call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+             call MatSetValue( B, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
              call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2), -Mij_star , INSERT_VALUES, ierr )
            endif
        case("A")
@@ -174,5 +203,88 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyEnd(B,MAT_FINAL_ASSEMBLY,ierr)
+ !call MatCreateTranspose(A,AT,ierr)
+ call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,AT,ierr)
+ call MatShellSetOperation(AT,MATOP_MULT,AT_mat_mult,ierr)
+ call MatShellSetOperation(AT,MATOP_MULT_TRANSPOSE,AT_mat_mult_transpose,ierr)
+ !call MatCreateHermitianTranspose(B,BHT,ierr)
+ call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,BHT,ierr)
+ call MatShellSetOperation(BHT,MATOP_MULT,BHT_mat_mult,ierr)
+ call MatShellSetOperation(BHT,MATOP_MULT_TRANSPOSE,BHT_mat_mult_transpose,ierr)
+ !mone = -1.0
+ !call MatScale(AT,mone,ierr)
+ !call MatScale(BHT,mone,ierr)
+ matArray(1) = A
+ matArray(2) = B
+ matArray(3) = BHT
+ matArray(4) = AT
+ itwo = 2
+ call MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr)
+ 
+ call MatViewFromOptions(slepc_mat,PETSC_NULL_MAT,"-H_mat",ierr)
+ call MatViewFromOptions(A,PETSC_NULL_MAT,"-A_mat",ierr)
+ call MatViewFromOptions(B,PETSC_NULL_MAT,"-B_mat",ierr)
+ call MatViewFromOptions(AT,PETSC_NULL_MAT,"-At_mat",ierr)
+ call MatViewFromOptions(BHT,PETSC_NULL_MAT,"-Bht_mat",ierr)
  !
 end subroutine K_stored_in_a_slepc_matrix
+
+subroutine AT_mat_mult(M,X,F,ierr)
+  use shellmat_module
+  implicit none
+  Mat     M
+  Vec     X,F
+  PetscScalar mone 
+  PetscErrorCode ierr
+  call MatMultTranspose(A,X,F,ierr)
+  mone = -1.0
+  call VecScale(F,mone,ierr)
+  return
+end subroutine AT_mat_mult
+
+subroutine BHT_mat_mult(M,X,F,ierr)
+  use shellmat_module
+  implicit none
+  Mat     M
+  Vec     X,F
+  PetscScalar mone 
+  PetscErrorCode ierr
+  call MatMultHermitianTranspose(B,X,F,ierr)
+  mone = -1.0
+  call VecScale(F,mone,ierr)
+  return
+end subroutine BHT_mat_mult
+
+subroutine AT_mat_mult_transpose(M,X,F,ierr)
+  use shellmat_module
+  implicit none
+  Mat     M
+  Vec     X,F
+  PetscScalar mone
+  PetscErrorCode ierr
+  call MatMult(A,X,F,ierr)
+  mone = -1.0
+  call VecScale(F,mone,ierr)
+  return
+end subroutine AT_mat_mult_transpose
+
+subroutine BHT_mat_mult_transpose(M,X,F,ierr)
+  use shellmat_module
+  implicit none
+  Mat     M
+  Vec     X,F
+  PetscScalar mone
+  PetscErrorCode ierr
+  call VecConjugate(X,ierr)
+  call MatMult(B,X,F,ierr)
+  mone = -1.0
+  call VecConjugate(F,ierr)
+  call VecScale(F,mone,ierr)
+  call VecConjugate(X,ierr)
+  return
+end subroutine BHT_mat_mult_transpose
+
