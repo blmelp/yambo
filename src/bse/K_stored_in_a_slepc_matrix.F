@@ -78,11 +78,11 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
  ! Allocate the slepc Matrix
  !
- call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
- call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,ierr)
- call MatSetType(slepc_mat, MATMPIDENSE,ierr)
- call MatSetFromOptions(slepc_mat,ierr)
- call MatSetUp(slepc_mat,ierr)
+ !call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
+ !call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,ierr)
+ !call MatSetType(slepc_mat, MATMPIDENSE,ierr)
+ !call MatSetFromOptions(slepc_mat,ierr)
+ !call MatSetUp(slepc_mat,ierr)
 
  call MatCreate(PETSC_COMM_WORLD,A,ierr)
  call MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
@@ -158,41 +158,41 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
        !
        select case(BS_blk(i_B)%mode)
        case("R")    
-           call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            call MatSetValue( A, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! The resonant block is hermitial
-           call MatSetValue( slepc_mat, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
            call MatSetValue( A, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
          if (l_BS_ares_from_res.and.BS_K_coupling) then
            ! The anti-resonant block is A=-R*
-           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1), -Mij_star, INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1), -Mij_star, INSERT_VALUES, ierr )
            ! The anti-resonant block is hermitian
-           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),      -Mij, INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),      -Mij, INSERT_VALUES, ierr )
          endif
        case("C")
-           call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
            call MatSetValue( B, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
-           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1), -Mij_star , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1), -Mij_star , INSERT_VALUES, ierr )
            if (l_BS_ares_from_res) then
              ! The coupling block and the anti-coupling block are symmetric
-             call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+             !call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
              call MatSetValue( B, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
-             call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2), -Mij_star , INSERT_VALUES, ierr )
+             !call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2), -Mij_star , INSERT_VALUES, ierr )
            endif
        case("A")
          ! The anti-resonant block is hermitial
          if(BS_res_ares_n_mat==1) then
-           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
-           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),  Mij_star , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),  Mij_star , INSERT_VALUES, ierr )
          else
-           call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
-           call MatSetValue( slepc_mat, H_pos(2), H_pos(1),  Mij_star , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(2), H_pos(1),  Mij_star , INSERT_VALUES, ierr )
          endif
        case("Q")
-           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! Coupling from anti-coupling: the whole BSE matrix is Pseudo-HErmitian
-           call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1), -Mij_star , INSERT_VALUES, ierr )
+           !call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1), -Mij_star , INSERT_VALUES, ierr )
        end select
        !
      enddo
@@ -201,8 +201,8 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
    !
  enddo
  !
- call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ !call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ !call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY,ierr)
